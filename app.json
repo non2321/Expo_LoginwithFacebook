@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "myApp",
+    "name": "Facebook Login",
     "slug": "myApp",
     "platforms": [
       "ios",
@@ -22,7 +22,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.test.myapp"
     }
   }
 }

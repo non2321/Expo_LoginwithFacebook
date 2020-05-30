@@ -1,19 +1,100 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import * as Facebook from 'expo-facebook';
+
+console.disableYellowBox = true;
 
 export default function App() {
+
+  const [isLoggedin, setLoggedinStatus] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const [isImageLoading, setImageLoadStatus] = useState(false);
+
+  const facebookLogIn = async () => {
+    try {
+      await Facebook.initializeAsync('617899138813047');
+      const {
+        type,
+        token,
+        expires,
+        permissions,
+        declinedPermissions,
+      } = await Facebook.logInWithReadPermissionsAsync({
+        permissions: ['public_profile','email', 'user_friends'],
+      });
+      if (type === 'success') {
+        // Get the user's name using Facebook's Graph API
+        fetch(`https://graph.facebook.com/me?access_token=${token}&fields=id,name,email,birthday,picture.height(500)`)
+          .then(response => response.json())
+          .then(data => {
+            setLoggedinStatus(true);
+            setUserData(data);
+            // console.log(token);
+            // console.log(expires);
+            console.log(data);           
+          })
+          .catch(e => console.log(e))
+      } else {
+        // type === 'cancel'
+      }
+    } catch ({ message }) {
+      alert(`Facebook Login Error: ${message}`);
+    }
+  }
+
+  const logout = () => {
+    setLoggedinStatus(false);
+    setUserData(null);
+    setImageLoadStatus(false);
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-    </View>
+    isLoggedin ?
+      userData ?
+        <View style={styles.container}>
+          <Image
+            style={{ width: 200, height: 200, borderRadius: 50 }}
+            source={{ uri: userData.picture.data.url }}
+            onLoadEnd={() => setImageLoadStatus(true)} />
+          <ActivityIndicator size="large" color="#0000ff" animating={!isImageLoading} style={{ position: "absolute" }} />
+          <Text style={{ fontSize: 22, marginVertical: 10 }}>Hi {userData.name}!</Text>
+          <TouchableOpacity style={styles.logoutBtn} onPress={()=> logout()}>
+            <Text style={{ color: "#fff" }}>Logout</Text>
+          </TouchableOpacity>
+        </View> :
+        null
+      :
+      <View style={styles.container}>
+        <Text>255</Text>
+        <Image
+          style={{ width: 200, height: 200, borderRadius: 50, marginVertical: 20 }}
+          source={require("./assets/reactjs-logo.png")} />
+        <TouchableOpacity style={styles.loginBtn} onPress={() => facebookLogIn()}>
+          <Text style={{ color: "#fff" }}>Login with Facebook</Text>
+        </TouchableOpacity>
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#e9ebee',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loginBtn: {
+    backgroundColor: '#4267b2',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20
+  },
+  logoutBtn: {
+    backgroundColor: 'grey',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    position: "absolute",
+    bottom: 0
   },
 });
